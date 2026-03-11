@@ -21,7 +21,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1',
+    default='localhost,127.0.0.1,.vercel.app',
     cast=lambda v: [h.strip() for h in v.split(',')]
 )
 
