@@ -1,0 +1,49 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {# Category Name #}
+      <div class="mb-5">
+        <label for="{{ form.name.id_for_label }}" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+          Category Name
+        </label>
+        {{ form.name }}
+        {% if form.name.errors %}
+        <p class="text-rose-500 text-xs mt-1">{{ form.name.errors|join:" " }}</p>
+        {% endif %}
+      </div>
+
+      {# Emoji #}
+      <div class="mb-7">
+        <label for="{{ form.emoji.id_for_label }}" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+          Icon (Emoji)
+        </label>
+        {{ form.emoji }}
+        {% if form.emoji.errors %}
+        <p class="text-rose-500 text-xs mt-1">{{ form.emoji.errors|join:" " }}</p>
+        {% endif %}
+        <p class="text-slate-400 text-xs mt-2">Choose an emoji that represents this category.</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button type="submit"
+          class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2">
+          <span class="material-icons-round text-base">save</span>
+          Save Category
+        </button>
+        <a href="{% url 'category_list' %}"
+           class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-xl transition">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

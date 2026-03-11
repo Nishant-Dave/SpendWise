@@ -1,0 +1,35 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}Delete Category{% endblock %}
+{% block page_title %}Delete Category{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center">
+    <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <span class="material-icons-round text-rose-500 text-3xl">delete_forever</span>
+    </div>
+    <h2 class="text-slate-800 font-bold text-xl mb-2">Delete Category?</h2>
+    <p class="text-slate-500 text-sm mb-2">
+      Are you sure you want to delete
+      <span class="font-semibold text-slate-700">"{{ object }}"</span>?
+    </p>
+    <p class="text-amber-600 text-xs bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 mb-6">
+      <span class="material-icons-round text-sm align-middle">warning</span>
+      Transactions linked to this category will keep their data but lose the category reference.
+    </p>
+    <form method="post" class="flex justify-center gap-3">
+      {% csrf_token %}
+      <button type="submit"
+        class="bg-rose-500 hover:bg-rose-600 text-white font-semibold px-6 py-2.5 rounded-xl transition flex items-center gap-2">
+        <span class="material-icons-round text-base">delete</span>
+        Yes, Delete
+      </button>
+      <a href="{% url 'category_list' %}"
+         class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-6 py-2.5 rounded-xl transition">
+        Cancel
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

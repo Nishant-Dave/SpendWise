@@ -1,0 +1,66 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}Transaction Detail{% endblock %}
+{% block page_title %}Transaction Detail{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+
+    {# Amount hero #}
+    <div class="flex items-center justify-between mb-6 pb-6 border-b border-slate-100">
+      <div>
+        <p class="text-slate-400 text-sm mb-1">{{ transaction.date|date:"l, d F Y" }}</p>
+        <p class="text-4xl font-bold {% if transaction.type == 'Income' %}text-emerald-600{% else %}text-rose-500{% endif %}">
+          {% if transaction.type == 'Income' %}+{% else %}−{% endif %}₹{{ transaction.amount|floatformat:2 }}
+        </p>
+      </div>
+      {% if transaction.type == 'Income' %}
+      <span class="bg-emerald-50 text-emerald-700 text-sm font-bold px-3 py-1.5 rounded-full">💰 Income</span>
+      {% else %}
+      <span class="bg-rose-50 text-rose-700 text-sm font-bold px-3 py-1.5 rounded-full">💸 Expense</span>
+      {% endif %}
+    </div>
+
+    {# Details grid #}
+    <dl class="space-y-4 mb-8">
+      <div class="flex justify-between">
+        <dt class="text-slate-400 text-sm font-medium">Description</dt>
+        <dd class="text-slate-700 text-sm font-semibold">{{ transaction.description|default:"—" }}</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-slate-400 text-sm font-medium">Category</dt>
+        <dd>
+          {% if transaction.category %}
+          <span class="bg-slate-100 text-slate-700 text-sm font-medium px-2.5 py-1 rounded-lg">
+            {{ transaction.category.emoji }} {{ transaction.category.name }}
+          </span>
+          {% else %}
+          <span class="text-slate-300 text-sm">No category</span>
+          {% endif %}
+        </dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-slate-400 text-sm font-medium">Date</dt>
+        <dd class="text-slate-700 text-sm font-semibold">{{ transaction.date|date:"d M Y" }}</dd>
+      </div>
+    </dl>
+
+    {# Actions #}
+    <div class="flex items-center gap-3">
+      <a href="{% url 'transaction_update' transaction.pk %}"
+         class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl transition flex items-center gap-2">
+        <span class="material-icons-round text-base">edit</span> Edit
+      </a>
+      <a href="{% url 'transaction_delete' transaction.pk %}"
+         class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold px-5 py-2.5 rounded-xl transition flex items-center gap-2">
+        <span class="material-icons-round text-base">delete</span> Delete
+      </a>
+      <a href="{% url 'transaction_list' %}"
+         class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-xl transition ml-auto">
+        ← Back
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

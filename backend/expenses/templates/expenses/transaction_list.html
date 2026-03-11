@@ -1,0 +1,171 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}Transactions{% endblock %}
+{% block page_title %}Transactions{% endblock %}
+{% block page_subtitle %}Manage your income and expenses{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'transaction_create' %}"
+   class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-sm">
+  <span class="material-icons-round text-base">add</span>
+  Add Transaction
+</a>
+{% endblock %}
+
+{% block content %}
+
+{# ── FILTER BAR ── #}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-5">
+  <form method="get" class="flex flex-wrap items-end gap-3">
+    <div class="flex-1 min-w-[130px]">
+      <label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>
+      <select name="type" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+        <option value="">All Types</option>
+        <option value="Income"  {% if filter_type == 'Income'  %}selected{% endif %}>💰 Income</option>
+        <option value="Expense" {% if filter_type == 'Expense' %}selected{% endif %}>💸 Expense</option>
+      </select>
+    </div>
+
+    <div class="flex-1 min-w-[150px]">
+      <label class="block text-xs font-semibold text-slate-500 mb-1">Category</label>
+      <select name="category" class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent">
+        <option value="">All Categories</option>
+        {% for cat in user_categories %}
+        <option value="{{ cat.pk }}" {% if filter_category == cat.pk|stringformat:"s" %}selected{% endif %}>
+          {{ cat.emoji }} {{ cat.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="flex-1 min-w-[130px]">
+      <label class="block text-xs font-semibold text-slate-500 mb-1">From Date</label>
+      <input type="date" name="date_from" value="{{ filter_date_from }}"
+             class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+    </div>
+
+    <div class="flex-1 min-w-[130px]">
+      <label class="block text-xs font-semibold text-slate-500 mb-1">To Date</label>
+      <input type="date" name="date_to" value="{{ filter_date_to }}"
+             class="w-full text-sm border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+    </div>
+
+    <div class="flex gap-2">
+      <button type="submit"
+        class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+        <span class="material-icons-round text-base">filter_list</span>
+        Filter
+      </button>
+      <a href="{% url 'transaction_list' %}"
+         class="bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+        <span class="material-icons-round text-base">clear</span>
+        Clear
+      </a>
+    </div>
+  </form>
+</div>
+
+{# ── SUMMARY STRIP ── #}
+<div class="flex flex-wrap gap-3 mb-5">
+  <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-semibold px-4 py-2.5 rounded-xl">
+    <span class="material-icons-round text-base">arrow_upward</span>
+    Income: <span class="font-bold">₹{{ total_income|floatformat:2 }}</span>
+  </div>
+  <div class="flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-700 text-sm font-semibold px-4 py-2.5 rounded-xl">
+    <span class="material-icons-round text-base">arrow_downward</span>
+    Expenses: <span class="font-bold">₹{{ total_expense|floatformat:2 }}</span>
+  </div>
+  <div class="flex items-center gap-2 {% if net_balance >= 0 %}bg-indigo-50 border border-indigo-100 text-indigo-700{% else %}bg-rose-50 border border-rose-100 text-rose-700{% endif %} text-sm font-semibold px-4 py-2.5 rounded-xl">
+    <span class="material-icons-round text-base">account_balance_wallet</span>
+    Net: <span class="font-bold">₹{{ net_balance|floatformat:2 }}</span>
+  </div>
+</div>
+
+{# ── TRANSACTIONS TABLE ── #}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+  {% if transactions %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-100">
+          <th class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3 pr-4">Date</th>
+          <th class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3 pr-4">Description</th>
+          <th class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3 pr-4">Category</th>
+          <th class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3 pr-4">Type</th>
+          <th class="text-right text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3 pr-4">Amount</th>
+          <th class="text-right text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        {% for tx in transactions %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="py-3.5 pr-4 text-slate-500 text-xs whitespace-nowrap">{{ tx.date|date:"d M Y" }}</td>
+          <td class="py-3.5 pr-4">
+            <a href="{% url 'transaction_detail' tx.pk %}"
+               class="text-slate-700 font-medium hover:text-indigo-600 transition">
+              {{ tx.description|default:"—"|truncatechars:40 }}
+            </a>
+          </td>
+          <td class="py-3.5 pr-4">
+            {% if tx.category %}
+            <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-1 rounded-lg">
+              {{ tx.category.emoji }} {{ tx.category.name }}
+            </span>
+            {% else %}
+            <span class="text-slate-300 text-xs">No category</span>
+            {% endif %}
+          </td>
+          <td class="py-3.5 pr-4">
+            {% if tx.type == 'Income' %}
+            <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+              <span class="material-icons-round text-[11px]">arrow_upward</span> Income
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+              <span class="material-icons-round text-[11px]">arrow_downward</span> Expense
+            </span>
+            {% endif %}
+          </td>
+          <td class="py-3.5 pr-4 text-right font-bold whitespace-nowrap
+            {% if tx.type == 'Income' %}text-emerald-600{% else %}text-rose-500{% endif %}">
+            {% if tx.type == 'Income' %}+{% else %}−{% endif %}₹{{ tx.amount|floatformat:2 }}
+          </td>
+          <td class="py-3.5 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <a href="{% url 'transaction_update' tx.pk %}"
+                 class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-100 transition"
+                 title="Edit">
+                <span class="material-icons-round text-base">edit</span>
+              </a>
+              <a href="{% url 'transaction_delete' tx.pk %}"
+                 class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-100 transition"
+                 title="Delete">
+                <span class="material-icons-round text-base">delete</span>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="flex flex-col items-center justify-center py-20 text-center">
+    <span class="material-icons-round text-slate-200 text-6xl mb-4">search_off</span>
+    <p class="text-slate-500 font-semibold text-base mb-1">No transactions found</p>
+    <p class="text-slate-400 text-sm mb-5">
+      {% if filter_type or filter_category or filter_date_from or filter_date_to %}
+        Try adjusting your filters.
+      {% else %}
+        Start by adding your first transaction.
+      {% endif %}
+    </p>
+    <a href="{% url 'transaction_create' %}"
+       class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+      + Add Transaction
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

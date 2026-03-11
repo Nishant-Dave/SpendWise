@@ -1,0 +1,322 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}{{ current_month }} Overview{% endblock %}
+
+{% block extra_head %}
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'export_csv' %}"
+   class="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-sm">
+  <span class="material-icons-round text-base">download</span>
+  Download Report
+</a>
+<a href="{% url 'transaction_create' %}"
+   class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-sm">
+  <span class="material-icons-round text-base">add</span>
+  Add Transaction
+</a>
+{% endblock %}
+
+{% block content %}
+
+{# ── DATE HEADER ── #}
+<p class="flex items-center gap-1.5 text-sm text-slate-400 font-medium mb-4">
+  <span class="material-icons-round text-base align-middle">today</span>
+  {% now "l, F j, Y" %}
+</p>
+
+{# ── KPI CARDS ── #}
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+
+  {# Net Balance #}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col gap-3">
+    <div class="flex items-center justify-between">
+      <span class="text-slate-500 text-sm font-medium">Net Balance</span>
+      <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+        <span class="material-icons-round text-indigo-500 text-xl">account_balance_wallet</span>
+      </div>
+    </div>
+    <div>
+      <p class="text-3xl font-bold {% if net_balance >= 0 %}text-emerald-600{% else %}text-red-500{% endif %}">
+        ₹{{ net_balance|floatformat:2 }}
+      </p>
+      <p class="text-slate-400 text-xs mt-1">Income minus Expenses this month</p>
+    </div>
+  </div>
+
+  {# Monthly Income #}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col gap-3">
+    <div class="flex items-center justify-between">
+      <span class="text-slate-500 text-sm font-medium">Monthly Income</span>
+      <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+        <span class="material-icons-round text-emerald-500 text-xl">trending_up</span>
+      </div>
+    </div>
+    <div>
+      <p class="text-3xl font-bold text-emerald-600">+₹{{ total_income|floatformat:2 }}</p>
+      <p class="text-slate-400 text-xs mt-1">Total income in {{ current_month }}</p>
+    </div>
+  </div>
+
+  {# Monthly Expenses #}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col gap-3">
+    <div class="flex items-center justify-between">
+      <span class="text-slate-500 text-sm font-medium">Monthly Expenses</span>
+      <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
+        <span class="material-icons-round text-rose-500 text-xl">trending_down</span>
+      </div>
+    </div>
+    <div>
+      <p class="text-3xl font-bold text-rose-500">-₹{{ total_expense|floatformat:2 }}</p>
+      <p class="text-slate-400 text-xs mt-1">Total expenses in {{ current_month }}</p>
+    </div>
+  </div>
+
+</div>
+
+{# ── SPENDING OVERVIEW (Chart.js) ── #}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+  <div class="flex items-center justify-between mb-5">
+    <h2 class="text-slate-800 font-semibold text-base">Spending Overview</h2>
+    <div class="flex gap-2" id="chart-toggle">
+      <button data-range="1_month"
+        class="chart-btn text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-500 text-white transition">
+        This Month
+      </button>
+      <button data-range="3_months"
+        class="chart-btn text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+        Last 3 Months
+      </button>
+      <button data-range="6_months"
+        class="chart-btn text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+        Last 6 Months
+      </button>
+    </div>
+  </div>
+
+  {# Chart area — spinner shown while loading #}
+  <div class="relative" style="height: 260px;">
+    <canvas id="spendChart"></canvas>
+    <div id="chart-spinner"
+         class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl transition-opacity">
+      <svg class="animate-spin h-8 w-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+    </div>
+  </div>
+</div>
+
+{# ── RECENT TRANSACTIONS ── #}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+  <div class="flex items-center justify-between mb-5">
+    <h2 class="text-slate-800 font-semibold text-base">Recent Transactions</h2>
+    <a href="{% url 'transaction_list' %}"
+       class="text-indigo-500 hover:text-indigo-700 text-sm font-medium flex items-center gap-1 transition">
+      View All
+      <span class="material-icons-round text-base">arrow_forward</span>
+    </a>
+  </div>
+
+  {% if recent_transactions %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-100">
+          <th class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3">Date</th>
+          <th class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3">Description</th>
+          <th class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3">Category</th>
+          <th class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3">Type</th>
+          <th class="text-right text-xs font-semibold text-slate-400 uppercase tracking-wide pb-3">Amount</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        {% for tx in recent_transactions %}
+        <tr class="hover:bg-slate-50 transition group">
+          <td class="py-3.5 pr-4 text-slate-500 text-xs whitespace-nowrap">{{ tx.date|date:"d M Y" }}</td>
+          <td class="py-3.5 pr-4">
+            <a href="{% url 'transaction_detail' tx.pk %}"
+               class="text-slate-700 font-medium hover:text-indigo-600 transition">
+              {{ tx.description|default:"—"|truncatechars:35 }}
+            </a>
+          </td>
+          <td class="py-3.5 pr-4">
+            {% if tx.category %}
+            <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-1 rounded-lg">
+              {{ tx.category.emoji }} {{ tx.category.name }}
+            </span>
+            {% else %}
+            <span class="text-slate-300 text-xs">—</span>
+            {% endif %}
+          </td>
+          <td class="py-3.5 pr-4">
+            {% if tx.type == 'Income' %}
+            <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+              <span class="material-icons-round text-[11px]">arrow_upward</span> Income
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+              <span class="material-icons-round text-[11px]">arrow_downward</span> Expense
+            </span>
+            {% endif %}
+          </td>
+          <td class="py-3.5 text-right font-bold whitespace-nowrap
+            {% if tx.type == 'Income' %}text-emerald-600{% else %}text-rose-500{% endif %}">
+            {% if tx.type == 'Income' %}+{% else %}−{% endif %}₹{{ tx.amount|floatformat:2 }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="flex flex-col items-center justify-center py-16 text-center">
+    <span class="material-icons-round text-slate-200 text-6xl mb-3">receipt_long</span>
+    <p class="text-slate-400 font-medium text-sm">No transactions yet</p>
+    <a href="{% url 'transaction_create' %}"
+       class="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">
+      Add your first transaction
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // ── Chart.js instance (kept in closure so we can destroy/recreate) ──────
+  let chartInstance = null;
+  const CHART_API_URL = '{% url "chart_data" %}';
+
+  // Colour palette
+  const INCOME_COLOR  = { bg: 'rgba(16, 185, 129, 0.85)',  border: 'rgba(16, 185, 129, 1)' };
+  const EXPENSE_COLOR = { bg: 'rgba(239, 68, 68, 0.85)',   border: 'rgba(239, 68, 68, 1)' };
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function showSpinner(visible) {
+    document.getElementById('chart-spinner').style.opacity = visible ? '1' : '0';
+    document.getElementById('chart-spinner').style.pointerEvents = visible ? 'auto' : 'none';
+  }
+
+  function setActiveBtn(activeRange) {
+    document.querySelectorAll('.chart-btn').forEach(b => {
+      const isActive = b.dataset.range === activeRange;
+      b.classList.toggle('bg-indigo-500', isActive);
+      b.classList.toggle('text-white',     isActive);
+      b.classList.toggle('bg-slate-100',  !isActive);
+      b.classList.toggle('text-slate-600',!isActive);
+    });
+  }
+
+  // ── Render / update chart ─────────────────────────────────────────────────
+  function renderChart(data) {
+    const ctx = document.getElementById('spendChart').getContext('2d');
+
+    if (chartInstance) {
+      chartInstance.data.labels          = data.labels;
+      chartInstance.data.datasets[0].data = data.income;
+      chartInstance.data.datasets[1].data = data.expense;
+      chartInstance.update('active');
+    } else {
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [
+            {
+              label: 'Income',
+              data: data.income,
+              backgroundColor: INCOME_COLOR.bg,
+              borderColor:     INCOME_COLOR.border,
+              borderWidth: 1.5,
+              borderRadius: 6,
+              borderSkipped: false,
+            },
+            {
+              label: 'Expense',
+              data: data.expense,
+              backgroundColor: EXPENSE_COLOR.bg,
+              borderColor:     EXPENSE_COLOR.border,
+              borderWidth: 1.5,
+              borderRadius: 6,
+              borderSkipped: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              position: 'top',
+              align: 'end',
+              labels: {
+                boxWidth: 12,
+                boxHeight: 12,
+                borderRadius: 4,
+                useBorderRadius: true,
+                font: { size: 12, family: 'Inter' },
+                color: '#64748b',
+              },
+            },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleFont: { size: 12, family: 'Inter', weight: '600' },
+              bodyFont:  { size: 12, family: 'Inter' },
+              padding: 10,
+              cornerRadius: 10,
+              callbacks: {
+                label: ctx => ` ₹${ctx.parsed.y.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11, family: 'Inter' }, color: '#94a3b8' },
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                font: { size: 11, family: 'Inter' },
+                color: '#94a3b8',
+                callback: v => '₹' + v.toLocaleString('en-IN'),
+              },
+            },
+          },
+        },
+      });
+    }
+    showSpinner(false);
+  }
+
+  // ── Fetch data from the JSON API ──────────────────────────────────────────
+  function loadChart(range) {
+    showSpinner(true);
+    setActiveBtn(range);
+    fetch(`${CHART_API_URL}?range=${range}`)
+      .then(r => r.json())
+      .then(renderChart)
+      .catch(() => showSpinner(false));
+  }
+
+  // ── Wire up toggle buttons ────────────────────────────────────────────────
+  document.querySelectorAll('.chart-btn').forEach(btn => {
+    btn.addEventListener('click', () => loadChart(btn.dataset.range));
+  });
+
+  // ── Initial load (This Month) ─────────────────────────────────────────────
+  loadChart('1_month');
+})();
+</script>
+{% endblock %}

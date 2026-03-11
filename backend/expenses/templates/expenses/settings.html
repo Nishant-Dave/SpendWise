@@ -1,0 +1,98 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block page_title %}Settings{% endblock %}
+{% block page_subtitle %}Manage your account{% endblock %}
+
+{% block content %}
+
+{# ── PROFILE INFO ── #}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+  <h2 class="text-slate-800 font-semibold text-base mb-5 flex items-center gap-2">
+    <span class="material-icons-round text-indigo-500 text-xl">account_circle</span>
+    Profile Information
+  </h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+      <p class="text-xs text-slate-400 uppercase font-semibold tracking-wide mb-1">Username</p>
+      <p class="text-slate-800 font-semibold text-sm">{{ page_user.username }}</p>
+    </div>
+
+    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+      <p class="text-xs text-slate-400 uppercase font-semibold tracking-wide mb-1">Email</p>
+      <p class="text-slate-800 font-semibold text-sm">
+        {% if page_user.email %}{{ page_user.email }}{% else %}<span class="text-slate-400 italic">Not set</span>{% endif %}
+      </p>
+    </div>
+
+    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
+      <p class="text-xs text-slate-400 uppercase font-semibold tracking-wide mb-1">Member Since</p>
+      <p class="text-slate-800 font-semibold text-sm">{{ page_user.date_joined|date:"F j, Y" }}</p>
+    </div>
+
+  </div>
+</div>
+
+{# ── DANGER ZONE ── #}
+<div class="bg-white rounded-2xl shadow-sm border border-red-200 p-6">
+  <h2 class="text-red-600 font-semibold text-base mb-1 flex items-center gap-2">
+    <span class="material-icons-round text-base">warning</span>
+    Danger Zone
+  </h2>
+  <p class="text-slate-500 text-sm mb-5">
+    Permanently delete your account and all associated data. <strong>This action cannot be undone.</strong>
+  </p>
+
+  {# Error message #}
+  {% if error %}
+  <div class="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm font-medium px-4 py-3 rounded-xl mb-4">
+    <span class="material-icons-round text-base">error</span>
+    {{ error }}
+  </div>
+  {% endif %}
+
+  <form method="post" onsubmit="return confirmDelete(event);">
+    {% csrf_token %}
+
+    <div class="mb-4 max-w-sm">
+      <label for="id_delete_password" class="block text-sm font-semibold text-slate-700 mb-1.5">
+        Confirm your password to delete account
+      </label>
+      <input
+        type="password"
+        id="id_delete_password"
+        name="password"
+        required
+        autocomplete="current-password"
+        placeholder="Enter your password"
+        class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent transition"
+      />
+    </div>
+
+    <button
+      type="submit"
+      id="btn_delete_account"
+      class="inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-sm"
+    >
+      <span class="material-icons-round text-base">delete_forever</span>
+      Delete My Account
+    </button>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function confirmDelete(e) {
+    const confirmed = window.confirm(
+      '⚠️ Are you absolutely sure?\n\nThis will permanently delete your account and ALL your transaction/category data. This cannot be undone.'
+    );
+    if (!confirmed) e.preventDefault();
+    return confirmed;
+  }
+</script>
+{% endblock %}

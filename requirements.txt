@@ -1,0 +1,6 @@
+Django>=4.2,<5.0
+psycopg2-binary
+dj-database-url
+whitenoise
+python-decouple
+gunicorn>=21.2

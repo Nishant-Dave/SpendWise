@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In – SpendWise</title>
+  <meta name="description" content="Log in to SpendWise to track your income and expenses in Indian Rupees.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="min-h-full bg-gradient-to-br from-[#0F172A] to-[#1E293B] flex items-center justify-center p-4">
+
+  <div class="w-full max-w-sm">
+    {# Logo #}
+    <div class="flex items-center justify-center gap-3 mb-8">
+      <div class="w-11 h-11 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-xl">
+        <span class="text-white font-bold text-2xl">₹</span>
+      </div>
+      <div>
+        <p class="text-white font-bold text-xl leading-tight">SpendWise</p>
+        <p class="text-slate-400 text-xs">Track every Rupee. Master your finances.</p>
+      </div>
+    </div>
+
+    {# Card #}
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+      <h1 class="text-slate-800 font-bold text-xl mb-1">Welcome back</h1>
+      <p class="text-slate-400 text-sm mb-6">Sign in to your SpendWise account</p>
+
+      {# Messages #}
+      {% if messages %}
+      <div class="space-y-2 mb-5">
+        {% for message in messages %}
+        <div class="flex items-center gap-2 text-sm px-3 py-2.5 rounded-xl
+          {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+          {% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+          <span class="material-icons-round text-base">
+            {% if message.tags == 'error' %}error{% else %}info{% endif %}
+          </span>
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+        <div class="mb-4">
+          <label for="id_username" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Username</label>
+          <input type="text" name="username" id="id_username" required autofocus
+            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+            placeholder="Enter your username">
+        </div>
+
+        <div class="mb-6">
+          <label for="id_password" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Password</label>
+          <input type="password" name="password" id="id_password" required
+            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+            placeholder="••••••••">
+        </div>
+
+        <button type="submit"
+          class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl transition shadow-sm text-sm">
+          Log In
+        </button>
+      </form>
+    </div>
+
+    <p class="text-center text-slate-400 text-sm mt-5">
+      Don't have an account?
+      <a href="{% url 'register' %}" class="text-indigo-400 hover:text-indigo-300 font-semibold transition">Create one</a>
+    </p>
+  </div>
+
+</body>
+</html>

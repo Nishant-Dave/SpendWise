@@ -1,0 +1,122 @@
+{% extends 'expenses/base.html' %}
+
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {# ── Transaction Type Toggle ── #}
+      <div class="mb-6">
+        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Transaction Type</label>
+        <div class="grid grid-cols-2 gap-3">
+          <label id="type-income-label"
+            class="type-toggle-label flex items-center justify-center gap-2 border-2 rounded-xl py-3 cursor-pointer transition font-semibold text-sm
+              {% if form.type.value == 'Income' %}border-emerald-500 bg-emerald-50 text-emerald-700{% else %}border-slate-200 bg-white text-slate-500 hover:border-slate-300{% endif %}">
+            <input type="radio" name="type" value="Income" class="sr-only"
+              {% if form.type.value == 'Income' %}checked{% endif %}>
+            <span class="text-xl">💰</span> Income
+          </label>
+          <label id="type-expense-label"
+            class="type-toggle-label flex items-center justify-center gap-2 border-2 rounded-xl py-3 cursor-pointer transition font-semibold text-sm
+              {% if form.type.value != 'Income' %}border-rose-500 bg-rose-50 text-rose-700{% else %}border-slate-200 bg-white text-slate-500 hover:border-slate-300{% endif %}">
+            <input type="radio" name="type" value="Expense" class="sr-only"
+              {% if form.type.value != 'Income' %}checked{% endif %}>
+            <span class="text-xl">💸</span> Expense
+          </label>
+        </div>
+        {% if form.type.errors %}
+        <p class="text-rose-500 text-xs mt-1">{{ form.type.errors|join:" " }}</p>
+        {% endif %}
+      </div>
+
+      {# ── Amount ── #}
+      <div class="mb-5">
+        <label for="{{ form.amount.id_for_label }}" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+          Amount (₹)
+        </label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-base">₹</span>
+          {{ form.amount }}
+        </div>
+        {% if form.amount.errors %}
+        <p class="text-rose-500 text-xs mt-1">{{ form.amount.errors|join:" " }}</p>
+        {% endif %}
+      </div>
+
+      {# ── Category + Date (2-col) ── #}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+        <div>
+          <label for="{{ form.category.id_for_label }}" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Category</label>
+          {{ form.category }}
+          {% if form.category.errors %}
+          <p class="text-rose-500 text-xs mt-1">{{ form.category.errors|join:" " }}</p>
+          {% endif %}
+        </div>
+        <div>
+          <label for="{{ form.date.id_for_label }}" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Date</label>
+          {{ form.date }}
+          {% if form.date.errors %}
+          <p class="text-rose-500 text-xs mt-1">{{ form.date.errors|join:" " }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {# ── Description ── #}
+      <div class="mb-7">
+        <label for="{{ form.description.id_for_label }}" class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Description</label>
+        {{ form.description }}
+        {% if form.description.errors %}
+        <p class="text-rose-500 text-xs mt-1">{{ form.description.errors|join:" " }}</p>
+        {% endif %}
+      </div>
+
+      {# ── Actions ── #}
+      <div class="flex items-center gap-3">
+        <button type="submit"
+          class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2">
+          <span class="material-icons-round text-base">save</span>
+          Save Transaction
+        </button>
+        <a href="{% url 'transaction_list' %}"
+           class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-xl transition">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Style amount input with left padding for ₹ prefix
+  const amountInput = document.getElementById('{{ form.amount.id_for_label }}');
+  if (amountInput) amountInput.style.paddingLeft = '2.25rem';
+
+  // Transaction type toggle interactive styling
+  const labels = document.querySelectorAll('.type-toggle-label');
+  labels.forEach(label => {
+    const radio = label.querySelector('input[type=radio]');
+    radio.addEventListener('change', () => {
+      labels.forEach(l => {
+        l.classList.remove(
+          'border-emerald-500','bg-emerald-50','text-emerald-700',
+          'border-rose-500','bg-rose-50','text-rose-700'
+        );
+        l.classList.add('border-slate-200','bg-white','text-slate-500');
+      });
+      if (radio.value === 'Income') {
+        label.classList.add('border-emerald-500','bg-emerald-50','text-emerald-700');
+        label.classList.remove('border-slate-200','bg-white','text-slate-500');
+      } else {
+        label.classList.add('border-rose-500','bg-rose-50','text-rose-700');
+        label.classList.remove('border-slate-200','bg-white','text-slate-500');
+      }
+    });
+  });
+</script>
+{% endblock %}
