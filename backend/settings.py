@@ -21,9 +21,14 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1,.vercel.app',
+    default='localhost,127.0.0.1',
     cast=lambda v: [h.strip() for h in v.split(',')]
 )
+
+# Always allow Vercel deployment domains (*.vercel.app)
+# This is safe because HTTPS + CSRF protection is enforced separately.
+if '.vercel.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('.vercel.app')
 
 
 # ---------------------------------------------------------------------------
